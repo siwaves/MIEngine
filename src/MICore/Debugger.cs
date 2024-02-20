@@ -713,6 +713,8 @@ namespace MICore
             this.VerifyNotDebuggingCoreDump();
             Debug.Assert(_requestingRealAsyncBreak != BreakRequest.None);
 
+            Logger.WriteLine(LogLevel.Verbose, "***In Task CmdBreakInternal***");
+
             // Note that interrupt doesn't work on OS X with gdb:
             // https://sourceware.org/bugzilla/show_bug.cgi?id=20035
             if (IsLocalGdbTarget())
@@ -736,7 +738,8 @@ namespace MICore
                     // NOTE: this is not required for remote. Remote will not be using LocalLinuxTransport
                     if (useSignal)
                     {
-                        return CmdBreakUnix(debuggeePid, ResultClass.done);
+                        Logger.WriteLine(LogLevel.Verbose, "***Before CmdBreakUnix***");
+                        // return CmdBreakUnix(debuggeePid, ResultClass.done);
                     }
                 }
             }
@@ -745,6 +748,7 @@ namespace MICore
                 int pid = PidByInferior("i1");
                 if (pid != 0 && ((PipeTransport)_transport).Interrupt(pid))
                 {
+                    Logger.WriteLine(LogLevel.Verbose, "***Before PipeTransport return***");
                     return Task.FromResult<Results>(new Results(ResultClass.done));
                 }
             }
@@ -753,11 +757,13 @@ namespace MICore
                 int pid = PidByInferior("i1");
                 if (pid != 0 && ((UnixShellPortTransport)_transport).Interrupt(pid))
                 {
+                    Logger.WriteLine(LogLevel.Verbose, "***Before UnixShellPortTransport return***");
                     return Task.FromResult<Results>(new Results(ResultClass.done));
                 }
             }
 
             IsUsingExecInterrupt = true;
+            Logger.WriteLine(LogLevel.Verbose, "***Before -exec-interrupt***");
             var res = CmdAsync("-exec-interrupt", ResultClass.done);
             return res.ContinueWith((t) =>
             {
@@ -1260,6 +1266,7 @@ namespace MICore
                         {
                             Results results = _miResults.ParseCommandOutput(noprefix);
                             Logger.WriteLine(LogLevel.Verbose, id.ToString(CultureInfo.InvariantCulture) + ": elapsed time " + ((int)(DateTime.Now - waitingOperation.StartTime).TotalMilliseconds).ToString(CultureInfo.InvariantCulture));
+                            Logger.WriteLine(LogLevel.Verbose, "***Elapsed Time***");
                             waitingOperation.OnComplete(results, this.MICommandFactory);
                             return;
                         }
